@@ -21,7 +21,7 @@ pub fn problem2() -> i32 {
   while !m.contains(&current_freq) {
     m.insert(current_freq);
     current_freq += data[current_index];
-    current_index = if ( current_index + 1 >= data.len()) {
+    current_index = if current_index + 1 >= data.len() {
       0
     } else {
       current_index + 1
