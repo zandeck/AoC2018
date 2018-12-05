@@ -1,0 +1,1 @@
+/Users/matthieuzandecki/Documents/Rust_projects/AoC2018/target/debug/libchristmas_2018.rlib: /Users/matthieuzandecki/Documents/Rust_projects/AoC2018/src/common.rs /Users/matthieuzandecki/Documents/Rust_projects/AoC2018/src/lib.rs
