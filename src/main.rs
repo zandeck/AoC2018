@@ -12,5 +12,5 @@ fn main() {
   //let l: Vec<String> = vec! ["Hello".to_string(), "loool".to_string(), "worlt".to_string(), "world".to_string() ];
   // let w: String = "world".to_string();
 
-  println!("{:?}", day3::part1());
+  day3::part2();
 }
