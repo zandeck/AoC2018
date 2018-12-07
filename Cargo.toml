@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 log = "0.4.6"
 nom = "4.1.1"
+chrono = "0.4.6"
+time = "0.1.40"

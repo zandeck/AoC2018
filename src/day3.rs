@@ -4,22 +4,22 @@ use std::str;
 use std::str::FromStr;
 use super::common;
 use std::result::Result;
+use std::collections::HashSet;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum State {
     NotUsed,
-    Used,
-    Overlaped,
+    Claimed(Vec<u32>),
 }
 
 #[derive(Debug)]
 struct Fabriq {
     Height: usize,
     Width: usize,
-    Data: RefCell<Vec<State>>,
+    Data: Vec<State>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Claim {
     ID: u32,
     from_left: u32,
@@ -45,41 +45,46 @@ impl Fabriq {
         Fabriq {
             Height,
             Width,
-            Data: RefCell::new(vec![State::NotUsed; Height * Width]),
+            Data: vec![State::NotUsed; Height * Width],
         }
     }
 
-    fn set(&self, i: usize, j: usize, s: State) {
+    fn set(&mut self, i: usize, j: usize, s: State) {
         assert!(i <= self.Height);
         assert!(j <= self.Width);
-        println!("Set Index ({:?}, {:?}): {:?}: ", i, j, i* self.Width + j);
-        self.Data.borrow_mut()[ i* self.Width + j ] = s;
+        //println!("Set Index ({:?}, {:?}): {:?}: ", i, j, i* self.Width + j);
+        self.Data[ i* self.Width + j ] = s;
     }
 
     fn get(&self, i: usize, j:usize) -> State {
         assert!(i <= self.Height);
         assert!(j <= self.Width);
-        println!("Get Index ({:?}, {:?}): {:?}: ", i, j, i* self.Width + j);
+        //println!("Get Index ({:?}, {:?}): {:?}: ", i, j, i* self.Width + j);
 
-        self.Data.borrow()[i  * self.Width + j]
+        self.Data[i  * self.Width + j].clone()
     }
 
-    fn claim(&self, i: usize, j:usize) {
+    fn claim(&mut self, IDClaim: u32, i: usize, j:usize) {
         let current_state = self.get(i, j);
-        if current_state == State::NotUsed {
-            self.set(i, j, State::Used);
-        }
-        else if current_state == State::Used {
-            self.set(i, j, State::Overlaped);
+
+        match current_state {
+            State::NotUsed => self.set(i, j, State::Claimed( vec! [IDClaim] )),
+            State::Claimed(d) => {    
+                let mut claims = d.clone();
+                claims.push(IDClaim);
+                let new_state = State::Claimed( claims );
+                self.set(i, j, new_state)
+
+                }
         }
     }
 
-    fn handle_claim(&self, c: Claim) {
-        println!("Handle a claim!!!");
+    fn handle_claim(&mut self, c: Claim) {
+        //println!("Handle a claim!!!");
         for i in c.from_top..(c.from_top + c.tall) {
             for j in c.from_left..(c.from_left + c.wide) {
-                println!("Claimed: {:?}, {:?}", i, j);
-                self.claim(i as usize, j as usize);
+                //println!("Claimed: {:?}, {:?}", i, j);
+                self.claim(c.ID, i as usize, j as usize);
             }
         }
     }
@@ -88,19 +93,34 @@ impl Fabriq {
         let mut counter = 0;
         for i in 0..(self.Height) {
             for j in 0..(self.Width) {
-                if self.get(i, j) == State::Overlaped {
-                    counter = counter + 1;
+                match self.get(i, j) {
+                    State::Claimed(_) => counter = counter + 1,
+                    _ => (),
                 }
             }
         }
         counter
     }
+
+    fn overlaped_claims(&self) -> HashSet<u32> {
+        let mut ids = HashSet::new();
+        for i in 0..(self.Height) {
+            for j in 0..(self.Width) {
+                match self.get(i, j) {
+                    State::Claimed(d) => if d.len() >= 2 {d.into_iter().for_each(|e| { ids.insert(e); })},
+                    _ => (),
+                }
+            }
+        }
+
+        ids
+    }
 }
 
 pub fn part1() {
-    let new_fab = Fabriq::new(10, 10);
-    new_fab.set(0, 0, State::Used);
-    println!("{:?}", new_fab);
+    //let mut new_fab = Fabriq::new(10, 10);
+    //new_fab.set(0, 0, State::Claimed);
+    // println!("{:?}", new_fab);
 }
 
 fn u8_to_u32(l: nom::types::CompleteStr) -> u32 {
@@ -139,20 +159,24 @@ named!(
 pub fn part2() {
     let data = common::import_file_to_u8("resources/input3.txt".to_string()).unwrap();
     let claims = parse_claims(nom::types::CompleteStr(&data));
-    let fabriq = Fabriq::new(1001, 1001);
-    
+    let mut fabriq = Fabriq::new(1000, 1000);
+    let mut claims_id: HashSet<u32> = HashSet::new();
     // println!("Claims: {:?}", claims);
     match claims {
         Ok(claims) => {
             for c in claims.1 {
                 println!("Claim: {:?}", c);
                 fabriq.handle_claim(c);
+                claims_id.insert(c.ID);
             } 
         },
         _ => (),
     }
+    let all_overlaping_claims: HashSet<u32> = fabriq.overlaped_claims();
 
-    // println!("Fabriq: {:?}", fabriq);
+
+    println!("Fabriq: {:?}", fabriq);
     println!("Overlaped: {:?}", fabriq.count_overlaped());
+    println!("Overlaped claim: {:?}", claims_id.difference(&all_overlaping_claims).collect::<HashSet<&u32>>());
 
 }

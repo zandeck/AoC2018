@@ -2,6 +2,7 @@ mod common;
 mod day1;
 mod day2;
 mod day3;
+mod day4;
 
 use log;
 
@@ -12,5 +13,5 @@ fn main() {
   //let l: Vec<String> = vec! ["Hello".to_string(), "loool".to_string(), "worlt".to_string(), "world".to_string() ];
   // let w: String = "world".to_string();
 
-  day3::part2();
+  day4::part1();
 }
